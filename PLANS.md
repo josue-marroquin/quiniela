@@ -43,3 +43,22 @@ GROUP BY q.id_partido;
 ```
 
 Before implementation, confirm whether the dashboard should show one row per participant, one grouped summary per partido, or both. The final query may need aggregation depending on that decision.
+
+
+This other query might also be useful
+```
+SELECT
+    CONCAT(prts.equipo1, ' vs ', prts.equipo2) as partido,
+    prts.result_eq1,
+    prts.result_eq2,
+    p.nombre,
+    q.result_eq1,
+    q.result_eq2,
+    q.puntos
+FROM quinielas AS q
+JOIN participantes AS p
+    ON p.id = q.participante
+JOIN partidos AS prts
+	ON q.id_partido = prts.id_partido
+GROUP BY q.id_partido;
+```
