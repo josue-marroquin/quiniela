@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Partidos CRUD</title>
+  <title>Quinielas CRUD</title>
   <style>
     :root {
       color-scheme: light;
@@ -14,8 +14,6 @@
       --line: #d9dee8;
       --primary: #0f766e;
       --primary-dark: #115e59;
-      --danger: #b42318;
-      --danger-bg: #fff0ee;
       --warn: #8a5a00;
       --warn-bg: #fff7df;
       --ok-bg: #eafaf6;
@@ -35,7 +33,8 @@
     }
 
     button,
-    input {
+    input,
+    select {
       font: inherit;
     }
 
@@ -103,12 +102,21 @@
       padding: 18px;
     }
 
-    .panel-title {
+    .panel-title,
+    .table-toolbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
+    }
+
+    .panel-title {
       margin-bottom: 14px;
+    }
+
+    .table-toolbar {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
     }
 
     h2 {
@@ -117,8 +125,7 @@
       letter-spacing: 0;
     }
 
-    .preview {
-      width: 100%;
+    .notice {
       min-height: 40px;
       margin: 0 0 14px;
       padding: 10px 11px;
@@ -126,9 +133,7 @@
       background: #edf7f5;
       border: 1px solid #b9ded8;
       color: #11443f;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-      font-size: 12px;
-      overflow-wrap: anywhere;
+      font-size: 13px;
     }
 
     .grid {
@@ -152,7 +157,8 @@
       font-weight: 700;
     }
 
-    input {
+    input,
+    select {
       width: 100%;
       min-height: 42px;
       border: 1px solid #c9d0dc;
@@ -163,7 +169,8 @@
       outline: none;
     }
 
-    input:focus {
+    input:focus,
+    select:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.16);
     }
@@ -201,11 +208,6 @@
       color: #293241;
     }
 
-    .btn.danger {
-      background: var(--danger-bg);
-      color: var(--danger);
-    }
-
     .btn.icon {
       width: 36px;
       min-height: 36px;
@@ -219,15 +221,6 @@
       overflow: hidden;
     }
 
-    .table-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 14px;
-      border-bottom: 1px solid var(--line);
-    }
-
     .search {
       max-width: 360px;
     }
@@ -239,7 +232,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 860px;
+      min-width: 850px;
     }
 
     th,
@@ -263,7 +256,7 @@
       background: #fbfcfe;
     }
 
-    .id {
+    .mono {
       max-width: 260px;
       overflow-wrap: anywhere;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
@@ -271,7 +264,8 @@
       color: #394150;
     }
 
-    .score {
+    .score,
+    .points {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -354,38 +348,35 @@
   <main class="app">
     <header class="topbar">
       <div>
-        <h1>Partidos</h1>
+        <h1>Quinielas</h1>
       </div>
       <div class="meta" aria-live="polite">
-        <a class="chip" href="quinielas.html">Quinielas</a>
-        <span class="chip" id="totalChip">0 partidos</span>
+        <a class="chip" href="partidos.html">Partidos</a>
+        <span class="chip" id="totalChip">0 quinielas</span>
         <span class="chip" id="sourceChip">MySQL</span>
       </div>
     </header>
 
     <section class="layout">
-      <form class="panel form-panel" id="matchForm" autocomplete="off">
+      <form class="panel form-panel" id="quinielaForm" autocomplete="off">
         <div class="panel-title">
-          <h2 id="formTitle">Nuevo partido</h2>
+          <h2 id="formTitle">Nueva quiniela</h2>
           <button class="btn secondary hidden" id="cancelEdit" type="button">Cancelar</button>
         </div>
 
-        <output class="preview" id="idPreview">id_partido</output>
+        <p class="notice" id="pointsPreview">puntos se calculara automaticamente: 0</p>
 
         <div class="grid">
-          <div class="field full">
-            <label for="fechaHora">fecha_hora</label>
-            <input id="fechaHora" name="fecha_hora" type="datetime-local" required>
+          <div class="field">
+            <label for="participante">participante</label>
+            <input id="participante" name="participante" type="number" min="1" step="1" inputmode="numeric" required>
           </div>
 
           <div class="field">
-            <label for="equipo1">equipo1</label>
-            <input id="equipo1" name="equipo1" type="text" maxlength="100" required>
-          </div>
-
-          <div class="field">
-            <label for="equipo2">equipo2</label>
-            <input id="equipo2" name="equipo2" type="text" maxlength="100" required>
+            <label for="idPartido">id_partido</label>
+            <select id="idPartido" name="id_partido" required>
+              <option value="">Cargando partidos...</option>
+            </select>
           </div>
 
           <div class="field">
@@ -408,7 +399,7 @@
       <section class="panel table-panel">
         <div class="table-toolbar">
           <h2>Registros</h2>
-          <input class="search" id="search" type="search" placeholder="Buscar equipo o id_partido">
+          <input class="search" id="search" type="search" placeholder="Buscar participante o partido">
         </div>
 
         <div class="table-wrap">
@@ -416,49 +407,48 @@
             <thead>
               <tr>
                 <th>id</th>
+                <th>participante</th>
                 <th>id_partido</th>
-                <th>fecha_hora</th>
-                <th>equipo1</th>
-                <th>equipo2</th>
                 <th>result_eq1</th>
                 <th>result_eq2</th>
+                <th>puntos</th>
+                <th>updated_at</th>
                 <th></th>
               </tr>
             </thead>
-            <tbody id="matchesBody"></tbody>
+            <tbody id="quinielasBody"></tbody>
           </table>
-          <div class="empty hidden" id="emptyState">Sin partidos registrados</div>
+          <div class="empty hidden" id="emptyState">Sin quinielas registradas</div>
         </div>
       </section>
     </section>
   </main>
 
   <script>
-    const API_URL = "partidos_api.php";
+    const API_URL = "quinielas_api.php";
 
-    const form = document.querySelector("#matchForm");
+    const form = document.querySelector("#quinielaForm");
     const formTitle = document.querySelector("#formTitle");
     const submitBtn = document.querySelector("#submitBtn");
     const cancelEditBtn = document.querySelector("#cancelEdit");
     const clearBtn = document.querySelector("#clearBtn");
-    const body = document.querySelector("#matchesBody");
+    const body = document.querySelector("#quinielasBody");
     const emptyState = document.querySelector("#emptyState");
-    const idPreview = document.querySelector("#idPreview");
     const totalChip = document.querySelector("#totalChip");
     const sourceChip = document.querySelector("#sourceChip");
+    const pointsPreview = document.querySelector("#pointsPreview");
     const search = document.querySelector("#search");
 
     const fields = {
-      fechaHora: document.querySelector("#fechaHora"),
-      equipo1: document.querySelector("#equipo1"),
-      equipo2: document.querySelector("#equipo2"),
+      participante: document.querySelector("#participante"),
+      idPartido: document.querySelector("#idPartido"),
       resultEq1: document.querySelector("#resultEq1"),
       resultEq2: document.querySelector("#resultEq2")
     };
 
-    let matches = [];
+    let quinielas = [];
+    let partidos = [];
     let editingId = null;
-    let nextIdFromDb = 1;
 
     async function request(path = "", options = {}) {
       const response = await fetch(`${API_URL}${path}`, {
@@ -477,43 +467,8 @@
       return payload;
     }
 
-    function normalizeSegment(value) {
-      return value
-        .trim()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "_")
-        .replace(/^_+|_+$/g, "") || "sin_nombre";
-    }
-
-    function dateSegment(value) {
-      if (!value) return "yyyymmdd";
-      return value.slice(0, 10).replaceAll("-", "");
-    }
-
-    function buildMatchId(id, equipo1, equipo2, fechaHora) {
-      const cleanId = id || nextIdFromDb;
-      return [
-        cleanId,
-        normalizeSegment(equipo1 || "equipo1"),
-        normalizeSegment(equipo2 || "equipo2"),
-        dateSegment(fechaHora)
-      ].join("_");
-    }
-
     function valueToScore(value) {
       return value === "" ? null : Number(value);
-    }
-
-    function formatDateTime(value) {
-      if (!value) return "";
-      return value.slice(0, 16).replace("T", " ");
-    }
-
-    function toInputDateTime(value) {
-      if (!value) return "";
-      return value.slice(0, 16).replace(" ", "T");
     }
 
     function renderScore(value) {
@@ -532,7 +487,7 @@
     }
 
     function escapeHtml(value) {
-      return String(value)
+      return String(value ?? "")
         .replaceAll("&", "&amp;")
         .replaceAll("<", "&lt;")
         .replaceAll(">", "&gt;")
@@ -540,84 +495,102 @@
         .replaceAll("'", "&#039;");
     }
 
-    function filteredMatches() {
+    function partidoLabel(partido) {
+      const teams = partido.equipo1 && partido.equipo2 ? ` - ${partido.equipo1} vs ${partido.equipo2}` : "";
+      return `${partido.id_partido}${teams}`;
+    }
+
+    function renderPartidoOptions() {
+      if (!partidos.length) {
+        fields.idPartido.innerHTML = '<option value="">Sin partidos disponibles</option>';
+        return;
+      }
+
+      fields.idPartido.innerHTML = [
+        '<option value="">Selecciona un partido</option>',
+        ...partidos.map((partido) => `<option value="${escapeHtml(partido.id_partido)}">${escapeHtml(partidoLabel(partido))}</option>`)
+      ].join("");
+    }
+
+    function filteredQuinielas() {
       const term = search.value.trim().toLowerCase();
-      if (!term) return matches;
-      return matches.filter((match) => {
-        return [match.id_partido, match.equipo1, match.equipo2, match.fecha_hora]
+      if (!term) return quinielas;
+      return quinielas.filter((quiniela) => {
+        return [quiniela.id, quiniela.participante, quiniela.id_partido]
           .some((value) => String(value).toLowerCase().includes(term));
       });
     }
 
     function render() {
-      const visibleMatches = filteredMatches();
-      body.innerHTML = visibleMatches.map((match) => `
+      const visibleQuinielas = filteredQuinielas();
+      body.innerHTML = visibleQuinielas.map((quiniela) => `
         <tr>
-          <td>${match.id}</td>
-          <td class="id">${escapeHtml(match.id_partido)}</td>
-          <td>${escapeHtml(formatDateTime(match.fecha_hora))}</td>
-          <td>${escapeHtml(match.equipo1)}</td>
-          <td>${escapeHtml(match.equipo2)}</td>
-          <td>${renderScore(match.result_eq1)}</td>
-          <td>${renderScore(match.result_eq2)}</td>
+          <td>${quiniela.id}</td>
+          <td>${quiniela.participante}</td>
+          <td class="mono">${escapeHtml(quiniela.id_partido)}</td>
+          <td>${renderScore(quiniela.result_eq1)}</td>
+          <td>${renderScore(quiniela.result_eq2)}</td>
+          <td><span class="points">${quiniela.puntos ?? 0}</span></td>
+          <td>${escapeHtml(quiniela.updated_at)}</td>
           <td>
             <div class="row-actions">
-              <button class="btn icon" type="button" data-action="edit" data-id="${match.id}" title="Editar" aria-label="Editar partido ${match.id}">${editIcon()}</button>
-              <button class="btn icon" type="button" data-action="delete" data-id="${match.id}" title="Eliminar" aria-label="Eliminar partido ${match.id}">${deleteIcon()}</button>
+              <button class="btn icon" type="button" data-action="edit" data-id="${quiniela.id}" title="Editar" aria-label="Editar quiniela ${quiniela.id}">${editIcon()}</button>
+              <button class="btn icon" type="button" data-action="delete" data-id="${quiniela.id}" title="Eliminar" aria-label="Eliminar quiniela ${quiniela.id}">${deleteIcon()}</button>
             </div>
           </td>
         </tr>
       `).join("");
 
-      emptyState.classList.toggle("hidden", visibleMatches.length > 0);
-      totalChip.textContent = `${matches.length} ${matches.length === 1 ? "partido" : "partidos"}`;
+      emptyState.classList.toggle("hidden", visibleQuinielas.length > 0);
+      totalChip.textContent = `${quinielas.length} ${quinielas.length === 1 ? "quiniela" : "quinielas"}`;
       updatePreview();
     }
 
     function updatePreview() {
-      const id = editingId || nextIdFromDb;
-      idPreview.value = buildMatchId(id, fields.equipo1.value, fields.equipo2.value, fields.fechaHora.value);
+      pointsPreview.textContent = "puntos se calculara automaticamente: 0";
     }
 
     function resetForm() {
       editingId = null;
       form.reset();
-      formTitle.textContent = "Nuevo partido";
+      formTitle.textContent = "Nueva quiniela";
       submitBtn.textContent = "Guardar";
       cancelEditBtn.classList.add("hidden");
       updatePreview();
     }
 
-    function fillForm(match) {
-      editingId = match.id;
-      fields.fechaHora.value = toInputDateTime(match.fecha_hora);
-      fields.equipo1.value = match.equipo1;
-      fields.equipo2.value = match.equipo2;
-      fields.resultEq1.value = match.result_eq1 ?? "";
-      fields.resultEq2.value = match.result_eq2 ?? "";
-      formTitle.textContent = `Editar partido #${match.id}`;
+    function fillForm(quiniela) {
+      editingId = quiniela.id;
+      fields.participante.value = quiniela.participante;
+      fields.idPartido.value = quiniela.id_partido;
+      fields.resultEq1.value = quiniela.result_eq1 ?? "";
+      fields.resultEq2.value = quiniela.result_eq2 ?? "";
+      formTitle.textContent = `Editar quiniela #${quiniela.id}`;
       submitBtn.textContent = "Actualizar";
       cancelEditBtn.classList.remove("hidden");
       updatePreview();
-      fields.fechaHora.focus();
+      fields.participante.focus();
     }
 
-    async function loadMatches() {
+    async function loadQuinielas() {
       try {
         body.innerHTML = "";
-        emptyState.textContent = "Cargando partidos...";
+        emptyState.textContent = "Cargando quinielas...";
         emptyState.classList.remove("hidden");
 
         const payload = await request();
-        matches = payload.data || [];
-        nextIdFromDb = payload.next_id || 1;
+        quinielas = payload.data || [];
+        partidos = payload.partidos || [];
         sourceChip.textContent = payload.table ? `MySQL: ${payload.table}` : "MySQL";
-        emptyState.textContent = "Sin partidos registrados";
+        renderPartidoOptions();
+        emptyState.textContent = "Sin quinielas registradas";
         render();
       } catch (error) {
-        matches = [];
+        quinielas = [];
+        partidos = [];
         body.innerHTML = "";
-        totalChip.textContent = "0 partidos";
+        renderPartidoOptions();
+        totalChip.textContent = "0 quinielas";
         sourceChip.textContent = "Error DB";
         emptyState.textContent = error.message;
         emptyState.classList.remove("hidden");
@@ -628,10 +601,9 @@
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      const match = {
-        fecha_hora: fields.fechaHora.value,
-        equipo1: fields.equipo1.value.trim(),
-        equipo2: fields.equipo2.value.trim(),
+      const quiniela = {
+        participante: Number(fields.participante.value),
+        id_partido: fields.idPartido.value,
         result_eq1: valueToScore(fields.resultEq1.value),
         result_eq2: valueToScore(fields.resultEq2.value)
       };
@@ -642,10 +614,10 @@
       try {
         await request(editingId ? `?id=${editingId}` : "", {
           method: editingId ? "PUT" : "POST",
-          body: JSON.stringify(match)
+          body: JSON.stringify(quiniela)
         });
         resetForm();
-        await loadMatches();
+        await loadQuinielas();
       } catch (error) {
         alert(error.message);
       } finally {
@@ -655,11 +627,8 @@
     });
 
     form.addEventListener("input", updatePreview);
-
     cancelEditBtn.addEventListener("click", resetForm);
-
     clearBtn.addEventListener("click", resetForm);
-
     search.addEventListener("input", render);
 
     body.addEventListener("click", async (event) => {
@@ -667,26 +636,26 @@
       if (!button) return;
 
       const id = Number(button.dataset.id);
-      const match = matches.find((item) => item.id === id);
-      if (!match) return;
+      const quiniela = quinielas.find((item) => item.id === id);
+      if (!quiniela) return;
 
       if (button.dataset.action === "edit") {
-        fillForm(match);
+        fillForm(quiniela);
         return;
       }
 
-      if (button.dataset.action === "delete" && confirm(`Eliminar partido #${id}?`)) {
+      if (button.dataset.action === "delete" && confirm(`Eliminar quiniela #${id}?`)) {
         try {
           await request(`?id=${id}`, { method: "DELETE" });
           if (editingId === id) resetForm();
-          await loadMatches();
+          await loadQuinielas();
         } catch (error) {
           alert(error.message);
         }
       }
     });
 
-    loadMatches();
+    loadQuinielas();
   </script>
 </body>
 </html>
