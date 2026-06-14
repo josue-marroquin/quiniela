@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Partidos CRUD</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #6b7280;
+      --line: #d9dee8;
+      --primary: #0f766e;
+      --primary-dark: #115e59;
+      --danger: #b42318;
+      --danger-bg: #fff0ee;
+      --warn: #8a5a00;
+      --warn-bg: #fff7df;
+      --ok-bg: #eafaf6;
+      --shadow: 0 12px 32px rgba(17, 24, 39, 0.09);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 40px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 999px;
+      padding: 7px 11px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .form-panel {
+      position: sticky;
+      top: 18px;
+      padding: 18px;
+    }
+
+    .panel-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .preview {
+      width: 100%;
+      min-height: 40px;
+      margin: 0 0 14px;
+      padding: 10px 11px;
+      border-radius: 7px;
+      background: #edf7f5;
+      border: 1px solid #b9ded8;
+      color: #11443f;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      color: #374151;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    input {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid #c9d0dc;
+      border-radius: 7px;
+      padding: 9px 10px;
+      background: #fff;
+      color: var(--ink);
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.16);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border-radius: 7px;
+      padding: 9px 12px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .btn.primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn.primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn.secondary {
+      background: #eef1f6;
+      color: #293241;
+    }
+
+    .btn.danger {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+
+    .btn.icon {
+      width: 36px;
+      min-height: 36px;
+      padding: 0;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: #263241;
+    }
+
+    .table-panel {
+      overflow: hidden;
+    }
+
+    .table-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .search {
+      max-width: 360px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 860px;
+    }
+
+    th,
+    td {
+      padding: 12px 11px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f0f3f8;
+      color: #374151;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    tr:hover td {
+      background: #fbfcfe;
+    }
+
+    .id {
+      max-width: 260px;
+      overflow-wrap: anywhere;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      color: #394150;
+    }
+
+    .score {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      min-height: 30px;
+      padding: 5px 9px;
+      border-radius: 7px;
+      background: var(--ok-bg);
+      color: #0d574d;
+      font-weight: 900;
+    }
+
+    .pending {
+      background: var(--warn-bg);
+      color: var(--warn);
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+      white-space: nowrap;
+    }
+
+    .empty {
+      padding: 34px 18px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 860px) {
+      .topbar {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .meta {
+        justify-content: flex-start;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .form-panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .app {
+        width: min(100% - 20px, 1180px);
+        padding-top: 16px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .table-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .search {
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>Partidos</h1>
+      </div>
+      <div class="meta" aria-live="polite">
+        <span class="chip" id="totalChip">0 partidos</span>
+        <span class="chip" id="sourceChip">MySQL</span>
+      </div>
+    </header>
+
+    <section class="layout">
+      <form class="panel form-panel" id="matchForm" autocomplete="off">
+        <div class="panel-title">
+          <h2 id="formTitle">Nuevo partido</h2>
+          <button class="btn secondary hidden" id="cancelEdit" type="button">Cancelar</button>
+        </div>
+
+        <output class="preview" id="idPreview">id_partido</output>
+
+        <div class="grid">
+          <div class="field full">
+            <label for="fechaHora">fecha_hora</label>
+            <input id="fechaHora" name="fecha_hora" type="datetime-local" required>
+          </div>
+
+          <div class="field">
+            <label for="equipo1">equipo1</label>
+            <input id="equipo1" name="equipo1" type="text" maxlength="100" required>
+          </div>
+
+          <div class="field">
+            <label for="equipo2">equipo2</label>
+            <input id="equipo2" name="equipo2" type="text" maxlength="100" required>
+          </div>
+
+          <div class="field">
+            <label for="resultEq1">result_eq1</label>
+            <input id="resultEq1" name="result_eq1" type="number" min="0" step="1" inputmode="numeric">
+          </div>
+
+          <div class="field">
+            <label for="resultEq2">result_eq2</label>
+            <input id="resultEq2" name="result_eq2" type="number" min="0" step="1" inputmode="numeric">
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn primary" id="submitBtn" type="submit">Guardar</button>
+          <button class="btn secondary" id="clearBtn" type="button">Limpiar</button>
+        </div>
+      </form>
+
+      <section class="panel table-panel">
+        <div class="table-toolbar">
+          <h2>Registros</h2>
+          <input class="search" id="search" type="search" placeholder="Buscar equipo o id_partido">
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>id</th>
+                <th>id_partido</th>
+                <th>fecha_hora</th>
+                <th>equipo1</th>
+                <th>equipo2</th>
+                <th>result_eq1</th>
+                <th>result_eq2</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="matchesBody"></tbody>
+          </table>
+          <div class="empty hidden" id="emptyState">Sin partidos registrados</div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const API_URL = "partidos_api.php";
+
+    const form = document.querySelector("#matchForm");
+    const formTitle = document.querySelector("#formTitle");
+    const submitBtn = document.querySelector("#submitBtn");
+    const cancelEditBtn = document.querySelector("#cancelEdit");
+    const clearBtn = document.querySelector("#clearBtn");
+    const body = document.querySelector("#matchesBody");
+    const emptyState = document.querySelector("#emptyState");
+    const idPreview = document.querySelector("#idPreview");
+    const totalChip = document.querySelector("#totalChip");
+    const sourceChip = document.querySelector("#sourceChip");
+    const search = document.querySelector("#search");
+
+    const fields = {
+      fechaHora: document.querySelector("#fechaHora"),
+      equipo1: document.querySelector("#equipo1"),
+      equipo2: document.querySelector("#equipo2"),
+      resultEq1: document.querySelector("#resultEq1"),
+      resultEq2: document.querySelector("#resultEq2")
+    };
+
+    let matches = [];
+    let editingId = null;
+    let nextIdFromDb = 1;
+
+    async function request(path = "", options = {}) {
+      const response = await fetch(`${API_URL}${path}`, {
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        ...options
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.detail || payload.error || "Error de servidor");
+      }
+
+      return payload;
+    }
+
+    function normalizeSegment(value) {
+      return value
+        .trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "") || "sin_nombre";
+    }
+
+    function dateSegment(value) {
+      if (!value) return "yyyymmdd";
+      return value.slice(0, 10).replaceAll("-", "");
+    }
+
+    function buildMatchId(id, equipo1, equipo2, fechaHora) {
+      const cleanId = id || nextIdFromDb;
+      return [
+        cleanId,
+        normalizeSegment(equipo1 || "equipo1"),
+        normalizeSegment(equipo2 || "equipo2"),
+        dateSegment(fechaHora)
+      ].join("_");
+    }
+
+    function valueToScore(value) {
+      return value === "" ? null : Number(value);
+    }
+
+    function formatDateTime(value) {
+      if (!value) return "";
+      return value.slice(0, 16).replace("T", " ");
+    }
+
+    function toInputDateTime(value) {
+      if (!value) return "";
+      return value.slice(0, 16).replace(" ", "T");
+    }
+
+    function renderScore(value) {
+      if (value === null || value === undefined || value === "") {
+        return '<span class="score pending">NULL</span>';
+      }
+      return `<span class="score">${value}</span>`;
+    }
+
+    function editIcon() {
+      return '<svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+    }
+
+    function deleteIcon() {
+      return '<svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function filteredMatches() {
+      const term = search.value.trim().toLowerCase();
+      if (!term) return matches;
+      return matches.filter((match) => {
+        return [match.id_partido, match.equipo1, match.equipo2, match.fecha_hora]
+          .some((value) => String(value).toLowerCase().includes(term));
+      });
+    }
+
+    function render() {
+      const visibleMatches = filteredMatches();
+      body.innerHTML = visibleMatches.map((match) => `
+        <tr>
+          <td>${match.id}</td>
+          <td class="id">${escapeHtml(match.id_partido)}</td>
+          <td>${escapeHtml(formatDateTime(match.fecha_hora))}</td>
+          <td>${escapeHtml(match.equipo1)}</td>
+          <td>${escapeHtml(match.equipo2)}</td>
+          <td>${renderScore(match.result_eq1)}</td>
+          <td>${renderScore(match.result_eq2)}</td>
+          <td>
+            <div class="row-actions">
+              <button class="btn icon" type="button" data-action="edit" data-id="${match.id}" title="Editar" aria-label="Editar partido ${match.id}">${editIcon()}</button>
+              <button class="btn icon" type="button" data-action="delete" data-id="${match.id}" title="Eliminar" aria-label="Eliminar partido ${match.id}">${deleteIcon()}</button>
+            </div>
+          </td>
+        </tr>
+      `).join("");
+
+      emptyState.classList.toggle("hidden", visibleMatches.length > 0);
+      totalChip.textContent = `${matches.length} ${matches.length === 1 ? "partido" : "partidos"}`;
+      updatePreview();
+    }
+
+    function updatePreview() {
+      const id = editingId || nextIdFromDb;
+      idPreview.value = buildMatchId(id, fields.equipo1.value, fields.equipo2.value, fields.fechaHora.value);
+    }
+
+    function resetForm() {
+      editingId = null;
+      form.reset();
+      formTitle.textContent = "Nuevo partido";
+      submitBtn.textContent = "Guardar";
+      cancelEditBtn.classList.add("hidden");
+      updatePreview();
+    }
+
+    function fillForm(match) {
+      editingId = match.id;
+      fields.fechaHora.value = toInputDateTime(match.fecha_hora);
+      fields.equipo1.value = match.equipo1;
+      fields.equipo2.value = match.equipo2;
+      fields.resultEq1.value = match.result_eq1 ?? "";
+      fields.resultEq2.value = match.result_eq2 ?? "";
+      formTitle.textContent = `Editar partido #${match.id}`;
+      submitBtn.textContent = "Actualizar";
+      cancelEditBtn.classList.remove("hidden");
+      updatePreview();
+      fields.fechaHora.focus();
+    }
+
+    async function loadMatches() {
+      try {
+        body.innerHTML = "";
+        emptyState.textContent = "Cargando partidos...";
+        emptyState.classList.remove("hidden");
+
+        const payload = await request();
+        matches = payload.data || [];
+        nextIdFromDb = payload.next_id || 1;
+        sourceChip.textContent = payload.table ? `MySQL: ${payload.table}` : "MySQL";
+        emptyState.textContent = "Sin partidos registrados";
+        render();
+      } catch (error) {
+        matches = [];
+        body.innerHTML = "";
+        totalChip.textContent = "0 partidos";
+        sourceChip.textContent = "Error DB";
+        emptyState.textContent = error.message;
+        emptyState.classList.remove("hidden");
+        updatePreview();
+      }
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const match = {
+        fecha_hora: fields.fechaHora.value,
+        equipo1: fields.equipo1.value.trim(),
+        equipo2: fields.equipo2.value.trim(),
+        result_eq1: valueToScore(fields.resultEq1.value),
+        result_eq2: valueToScore(fields.resultEq2.value)
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = editingId ? "Actualizando..." : "Guardando...";
+
+      try {
+        await request(editingId ? `?id=${editingId}` : "", {
+          method: editingId ? "PUT" : "POST",
+          body: JSON.stringify(match)
+        });
+        resetForm();
+        await loadMatches();
+      } catch (error) {
+        alert(error.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = editingId ? "Actualizar" : "Guardar";
+      }
+    });
+
+    form.addEventListener("input", updatePreview);
+
+    cancelEditBtn.addEventListener("click", resetForm);
+
+    clearBtn.addEventListener("click", resetForm);
+
+    search.addEventListener("input", render);
+
+    body.addEventListener("click", async (event) => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+
+      const id = Number(button.dataset.id);
+      const match = matches.find((item) => item.id === id);
+      if (!match) return;
+
+      if (button.dataset.action === "edit") {
+        fillForm(match);
+        return;
+      }
+
+      if (button.dataset.action === "delete" && confirm(`Eliminar partido #${id}?`)) {
+        try {
+          await request(`?id=${id}`, { method: "DELETE" });
+          if (editingId === id) resetForm();
+          await loadMatches();
+        } catch (error) {
+          alert(error.message);
+        }
+      }
+    });
+
+    loadMatches();
+  </script>
+</body>
+</html>
