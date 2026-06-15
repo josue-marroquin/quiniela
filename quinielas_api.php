@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/quiniela_points.php';
+
 header('Content-Type: application/json; charset=utf-8');
 
 function respond(int $status, array $payload): void
@@ -91,12 +93,66 @@ function nullable_score(array $data, string $key): ?int
     return (int) $data[$key];
 }
 
-function calculate_points(array $quiniela): int
+function match_scores(PDO $pdo, string $partidosTable, string $idPartido): array
 {
-    return 0;
+    $statement = $pdo->prepare(
+        "SELECT result_eq1, result_eq2
+         FROM `{$partidosTable}`
+         WHERE id_partido = ?
+         LIMIT 1"
+    );
+    $statement->execute([$idPartido]);
+    $scores = $statement->fetch();
+
+    if (!is_array($scores)) {
+        return ['result_eq1' => null, 'result_eq2' => null];
+    }
+
+    return [
+        'result_eq1' => $scores['result_eq1'] !== null ? (int) $scores['result_eq1'] : null,
+        'result_eq2' => $scores['result_eq2'] !== null ? (int) $scores['result_eq2'] : null,
+    ];
 }
 
-function clean_quiniela(array $data): array
+function calculate_points(PDO $pdo, string $partidosTable, array $quiniela): int
+{
+    $match = match_scores($pdo, $partidosTable, $quiniela['id_partido']);
+
+    return calculate_quiniela_points(
+        $quiniela['result_eq1'],
+        $quiniela['result_eq2'],
+        $match['result_eq1'],
+        $match['result_eq2']
+    );
+}
+
+function ensure_unique_quiniela(PDO $pdo, string $quinielasTable, int $participante, string $idPartido, ?int $ignoreId = null): void
+{
+    $sql = "SELECT id
+            FROM `{$quinielasTable}`
+            WHERE participante = ?
+              AND id_partido = ?";
+    $params = [$participante, $idPartido];
+
+    if ($ignoreId !== null) {
+        $sql .= " AND id <> ?";
+        $params[] = $ignoreId;
+    }
+
+    $sql .= " LIMIT 1";
+    $statement = $pdo->prepare($sql);
+    $statement->execute($params);
+    $existingId = $statement->fetchColumn();
+
+    if ($existingId !== false) {
+        respond(409, [
+            'error' => 'Ya existe una quiniela para este participante en ese partido',
+            'existing_id' => (int) $existingId,
+        ]);
+    }
+}
+
+function clean_quiniela(PDO $pdo, string $partidosTable, array $data): array
 {
     $participante = $data['participante'] ?? null;
     $idPartido = trim((string) ($data['id_partido'] ?? ''));
@@ -115,7 +171,7 @@ function clean_quiniela(array $data): array
         'result_eq1' => nullable_score($data, 'result_eq1'),
         'result_eq2' => nullable_score($data, 'result_eq2'),
     ];
-    $quiniela['puntos'] = calculate_points($quiniela);
+    $quiniela['puntos'] = calculate_points($pdo, $partidosTable, $quiniela);
 
     return $quiniela;
 }
@@ -123,14 +179,21 @@ function clean_quiniela(array $data): array
 $pdo = db();
 $quinielasTable = existing_table($pdo, ['quinielas'], 'quinielas');
 $partidosTable = existing_table($pdo, ['partidos', 'pardidos'], 'partidos ni pardidos');
+$participantesTable = existing_table($pdo, ['participantes'], 'participantes');
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {
     if ($method === 'GET') {
         $quinielas = $pdo->query(
-            "SELECT id, participante, id_partido, result_eq1, result_eq2, puntos, updated_at
-             FROM `{$quinielasTable}`
-             ORDER BY updated_at DESC, id DESC"
+            "SELECT q.id, q.participante, p.nombre AS participante_nombre, q.id_partido,
+                    CONCAT(prts.equipo1, ' vs ', prts.equipo2) AS partido,
+                    q.result_eq1, q.result_eq2, q.puntos, q.updated_at
+             FROM `{$quinielasTable}` AS q
+             LEFT JOIN `{$participantesTable}` AS p
+               ON p.id = q.participante
+             LEFT JOIN `{$partidosTable}` AS prts
+               ON prts.id_partido = q.id_partido
+             ORDER BY q.updated_at DESC, q.id DESC"
         )->fetchAll();
 
         $partidos = $pdo->query(
@@ -139,16 +202,25 @@ try {
              ORDER BY fecha_hora DESC, id DESC"
         )->fetchAll();
 
+        $participantes = $pdo->query(
+            "SELECT id, nombre
+             FROM `{$participantesTable}`
+             ORDER BY nombre ASC, id ASC"
+        )->fetchAll();
+
         respond(200, [
             'table' => $quinielasTable,
             'partidos_table' => $partidosTable,
+            'participantes_table' => $participantesTable,
             'data' => $quinielas,
             'partidos' => $partidos,
+            'participantes' => $participantes,
         ]);
     }
 
     if ($method === 'POST') {
-        $quiniela = clean_quiniela(input_json());
+        $quiniela = clean_quiniela($pdo, $partidosTable, input_json());
+        ensure_unique_quiniela($pdo, $quinielasTable, $quiniela['participante'], $quiniela['id_partido']);
         $statement = $pdo->prepare(
             "INSERT INTO `{$quinielasTable}` (participante, id_partido, result_eq1, result_eq2, puntos)
              VALUES (?, ?, ?, ?, ?)"
@@ -170,7 +242,8 @@ try {
             respond(400, ['error' => 'Falta id valido']);
         }
 
-        $quiniela = clean_quiniela(input_json());
+        $quiniela = clean_quiniela($pdo, $partidosTable, input_json());
+        ensure_unique_quiniela($pdo, $quinielasTable, $quiniela['participante'], $quiniela['id_partido'], $id);
         $statement = $pdo->prepare(
             "UPDATE `{$quinielasTable}`
              SET participante = ?, id_partido = ?, result_eq1 = ?, result_eq2 = ?, puntos = ?

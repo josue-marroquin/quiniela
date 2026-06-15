@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/quiniela_points.php';
+
 header('Content-Type: application/json; charset=utf-8');
 
 function respond(int $status, array $payload): void
@@ -158,8 +160,75 @@ function clean_match(array $data): array
     ];
 }
 
+function find_match(PDO $pdo, string $table, int $id): array
+{
+    $statement = $pdo->prepare(
+        "SELECT id, id_partido, fecha_hora, equipo1, equipo2, result_eq1, result_eq2
+         FROM `{$table}`
+         WHERE id = ?"
+    );
+    $statement->execute([$id]);
+    $match = $statement->fetch();
+
+    if (!is_array($match)) {
+        respond(404, ['error' => 'No existe el partido solicitado']);
+    }
+
+    return $match;
+}
+
+function update_linked_quinielas(PDO $pdo, string $quinielasTable, string $oldIdPartido, string $newIdPartido): int
+{
+    if ($oldIdPartido === $newIdPartido) {
+        return 0;
+    }
+
+    $statement = $pdo->prepare(
+        "UPDATE `{$quinielasTable}`
+         SET id_partido = ?
+         WHERE id_partido = ?"
+    );
+    $statement->execute([$newIdPartido, $oldIdPartido]);
+
+    return $statement->rowCount();
+}
+
+function recalculate_quiniela_points(PDO $pdo, string $quinielasTable, string $idPartido, ?int $actualEq1, ?int $actualEq2): int
+{
+    $statement = $pdo->prepare(
+        "SELECT id, result_eq1, result_eq2
+         FROM `{$quinielasTable}`
+         WHERE id_partido = ?"
+    );
+    $statement->execute([$idPartido]);
+    $quinielas = $statement->fetchAll();
+
+    if (!$quinielas) {
+        return 0;
+    }
+
+    $update = $pdo->prepare(
+        "UPDATE `{$quinielasTable}`
+         SET puntos = ?
+         WHERE id = ?"
+    );
+
+    foreach ($quinielas as $quiniela) {
+        $points = calculate_quiniela_points(
+            isset($quiniela['result_eq1']) ? (int) $quiniela['result_eq1'] : null,
+            isset($quiniela['result_eq2']) ? (int) $quiniela['result_eq2'] : null,
+            $actualEq1,
+            $actualEq2
+        );
+        $update->execute([$points, $quiniela['id']]);
+    }
+
+    return count($quinielas);
+}
+
 $pdo = db();
 $table = table_name($pdo);
+$quinielasTable = 'quinielas';
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {
@@ -198,9 +267,16 @@ try {
         $generatedId = id_partido($id, $match['equipo1'], $match['equipo2'], $match['fecha_hora']);
         $statement = $pdo->prepare("UPDATE `{$table}` SET id_partido = ? WHERE id = ?");
         $statement->execute([$generatedId, $id]);
+        $updatedQuinielas = recalculate_quiniela_points(
+            $pdo,
+            $quinielasTable,
+            $generatedId,
+            $match['result_eq1'],
+            $match['result_eq2']
+        );
         $pdo->commit();
 
-        respond(201, ['id' => $id, 'id_partido' => $generatedId]);
+        respond(201, ['id' => $id, 'id_partido' => $generatedId, 'updated_quinielas' => $updatedQuinielas]);
     }
 
     if ($method === 'PUT') {
@@ -210,7 +286,9 @@ try {
         }
 
         $match = clean_match(input_json());
+        $currentMatch = find_match($pdo, $table, $id);
         $generatedId = id_partido($id, $match['equipo1'], $match['equipo2'], $match['fecha_hora']);
+        $pdo->beginTransaction();
         $statement = $pdo->prepare(
             "UPDATE `{$table}`
              SET id_partido = ?, fecha_hora = ?, equipo1 = ?, equipo2 = ?, result_eq1 = ?, result_eq2 = ?
@@ -225,8 +303,27 @@ try {
             $match['result_eq2'],
             $id,
         ]);
+        $linkedQuinielas = update_linked_quinielas(
+            $pdo,
+            $quinielasTable,
+            (string) $currentMatch['id_partido'],
+            $generatedId
+        );
+        $updatedQuinielas = recalculate_quiniela_points(
+            $pdo,
+            $quinielasTable,
+            $generatedId,
+            $match['result_eq1'],
+            $match['result_eq2']
+        );
+        $pdo->commit();
 
-        respond(200, ['id' => $id, 'id_partido' => $generatedId]);
+        respond(200, [
+            'id' => $id,
+            'id_partido' => $generatedId,
+            'linked_quinielas' => $linkedQuinielas,
+            'updated_quinielas' => $updatedQuinielas,
+        ]);
     }
 
     if ($method === 'DELETE') {

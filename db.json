@@ -1,5 +1,5 @@
 {
-    "host": "192.168.1.25",
+    "host": "localhost",
     "usr": "root",
     "pass": "",
     "db_name": "quiniela"

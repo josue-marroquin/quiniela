@@ -1,0 +1,1363 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quiniela Ohana</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg-top: #07263d;
+      --bg-bottom: #03131f;
+      --ink: #f6f7fb;
+      --muted: #9ab8c9;
+      --line: rgba(255, 255, 255, 0.1);
+      --panel: rgba(7, 28, 46, 0.86);
+      --panel-strong: rgba(9, 37, 58, 0.95);
+      --aqua: #40e6d1;
+      --lagoon: #1a9fe8;
+      --mango: #ffbf3d;
+      --coral: #ff6b6b;
+      --mint: #62e5a2;
+      --foam: #dcf7ff;
+      --shadow: 0 22px 60px rgba(0, 0, 0, 0.33);
+      --title-font: Impact, Haettenschweiler, "Arial Black", sans-serif;
+      --body-font: "Trebuchet MS", "Avenir Next Condensed", "Gill Sans", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(64, 230, 209, 0.18), transparent 26%),
+        radial-gradient(circle at top right, rgba(255, 191, 61, 0.18), transparent 24%),
+        radial-gradient(circle at 20% 80%, rgba(255, 107, 107, 0.16), transparent 22%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+      color: var(--ink);
+      font-family: var(--body-font);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.7), transparent 92%);
+    }
+
+    a,
+    button {
+      color: inherit;
+      font: inherit;
+    }
+
+    .app {
+      width: min(1440px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 22px 0 40px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at top right, rgba(255, 191, 61, 0.22), transparent 24%),
+        radial-gradient(circle at left center, rgba(64, 230, 209, 0.16), transparent 22%),
+        linear-gradient(135deg, rgba(12, 49, 75, 0.86), rgba(6, 27, 44, 0.82)),
+        url("ohana_quiniela.png");
+      background-position: top right, left center, center, center;
+      background-size: auto, auto, auto, cover;
+      background-repeat: no-repeat;
+      box-shadow: var(--shadow);
+      isolation: isolate;
+      animation: rise 0.8s ease-out;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -80px;
+      top: -120px;
+      width: 260px;
+      height: 260px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(255, 191, 61, 0.35), transparent 65%);
+      z-index: -1;
+    }
+
+    .hero-top {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .hero-copy {
+      max-width: 760px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--foam);
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 14px 0 10px;
+      font-family: var(--title-font);
+      font-size: clamp(46px, 7vw, 80px);
+      line-height: 0.94;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .hero-copy p {
+      margin: 0;
+      max-width: 60ch;
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 21px);
+      line-height: 1.45;
+    }
+
+    .hero-links {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .hero-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 16px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      transition: transform 180ms ease, background 180ms ease;
+    }
+
+    .hero-link:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .hero-link.primary {
+      background: linear-gradient(135deg, var(--mango), #ff8d5b);
+      color: #162235;
+      border-color: transparent;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .stat {
+      padding: 18px 18px 16px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(6px);
+    }
+
+    .stat-label {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .stat-value {
+      display: block;
+      margin-top: 10px;
+      font-size: clamp(30px, 3vw, 42px);
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .stat-note {
+      display: block;
+      margin-top: 8px;
+      color: #d4ecf4;
+      font-size: 14px;
+    }
+
+    .board {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 28px;
+      background: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: var(--shadow);
+      animation: rise 0.9s ease-out;
+    }
+
+    .board-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .board-head h2 {
+      margin: 0;
+      font-size: clamp(28px, 3vw, 42px);
+      font-family: var(--title-font);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .board-head p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .rule-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #d7eef3;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .rule-pill strong {
+      color: var(--mango);
+    }
+
+    .chart-shell {
+      position: relative;
+      overflow: hidden;
+      padding: 18px;
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 18%),
+        linear-gradient(180deg, rgba(6, 17, 30, 0.9), rgba(5, 14, 24, 0.96));
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .chart {
+      width: 100%;
+      display: block;
+    }
+
+    .bar-chart {
+      min-width: 0;
+    }
+
+    .bar-chart-header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .bar-chart-title {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .bar-chart-subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .bar-chart-stage {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 0 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--foam);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .bar-chart-grid {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr);
+      gap: 14px;
+      align-items: stretch;
+      min-height: 480px;
+    }
+
+    .y-axis {
+      position: relative;
+      display: grid;
+      grid-template-rows: repeat(var(--tick-count, 6), 1fr);
+      min-height: 420px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .y-axis-label {
+      display: flex;
+      align-items: start;
+      justify-content: flex-end;
+      padding-right: 8px;
+      transform: translateY(-8px);
+    }
+
+    .plot {
+      position: relative;
+      min-height: 420px;
+      padding: 12px 0 0;
+    }
+
+    .plot-lines {
+      position: absolute;
+      inset: 12px 0 92px 0;
+      display: grid;
+      grid-template-rows: repeat(var(--tick-count, 6), 1fr);
+      pointer-events: none;
+    }
+
+    .plot-line {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .bars {
+      position: absolute;
+      inset: 12px 0 0 0;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: clamp(6px, 1vw, 14px);
+    }
+
+    .bar-slot {
+      flex: 1 1 0;
+      min-width: 0;
+      height: 100%;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 12px;
+    }
+
+    .bar-stack {
+      position: relative;
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      min-height: 420px;
+    }
+
+    .bar-track {
+      position: absolute;
+      inset: 0 auto 0 auto;
+      width: min(100%, 64px);
+      border-radius: 26px 26px 18px 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    }
+
+    .bar-fill {
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      width: min(100%, 64px);
+      padding: 16px 6px 14px;
+      border-radius: 26px 26px 18px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow:
+        0 16px 30px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transform-origin: bottom;
+      transform: scaleY(0);
+      transition: transform 900ms cubic-bezier(.2,.8,.2,1), filter 180ms ease;
+      cursor: pointer;
+    }
+
+    .bar-fill::after {
+      content: "";
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      top: 10px;
+      height: 26%;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent);
+      opacity: 0.8;
+    }
+
+    .bar-fill:hover {
+      filter: brightness(1.08);
+    }
+
+    .bar-value {
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 10px);
+      transform: translateX(-50%);
+      min-width: 54px;
+      min-height: 34px;
+      padding: 0 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: rgba(7, 18, 29, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      font-size: 16px;
+      font-weight: 900;
+      box-shadow: var(--shadow);
+      white-space: nowrap;
+    }
+
+    .bar-name-inside {
+      position: relative;
+      z-index: 1;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      color: rgba(255, 255, 255, 0.92);
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      line-height: 1;
+      text-transform: uppercase;
+      text-align: center;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+      user-select: none;
+    }
+
+    .bar-label {
+      padding: 10px 8px 8px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: center;
+    }
+
+    .bar-meta {
+      display: block;
+      color: #f6fbff;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .loading,
+    .error {
+      padding: 52px 18px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .error {
+      color: #ffd7ba;
+    }
+
+    .match-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .match-card {
+      overflow: hidden;
+      border-radius: 20px;
+      background: var(--panel-strong);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    }
+
+    .match-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 14px 10px;
+    }
+
+    .match-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0 12px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(64, 230, 209, 0.24), rgba(26, 159, 232, 0.24));
+      color: var(--foam);
+      font-weight: 900;
+      font-size: 20px;
+    }
+
+    .match-status {
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .match-card h3 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.08;
+    }
+
+    .match-scoreband {
+      display: grid;
+      gap: 6px;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, rgba(64, 230, 209, 0.18), rgba(26, 159, 232, 0.18));
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .match-result-label {
+      color: var(--foam);
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .match-result {
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .match-meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .match-meta-chip {
+      padding: 10px 10px 9px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .match-meta-chip strong {
+      display: block;
+      color: #ffffff;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .match-meta-chip span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .match-table {
+      padding: 0 14px 14px;
+    }
+
+    .match-table-head,
+    .match-row {
+      display: grid;
+      grid-template-columns: 96px 1.25fr 0.85fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .match-table-head {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 14px 14px 0 0;
+      background: linear-gradient(135deg, rgba(102, 209, 122, 0.7), rgba(54, 130, 27, 0.76));
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .match-table-body {
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-top: 0;
+      border-radius: 0 0 16px 16px;
+      background: rgba(3, 13, 22, 0.28);
+    }
+
+    .match-row {
+      min-height: 50px;
+      padding: 0 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .match-row:first-child {
+      border-top: 0;
+    }
+
+    .match-player {
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.05;
+    }
+
+    .match-prediction {
+      font-size: 16px;
+      line-height: 1.15;
+      color: #f8fbff;
+    }
+
+    .match-points-cell {
+      position: relative;
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 10px;
+      overflow: hidden;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .match-points-fill {
+      position: absolute;
+      inset: 0 auto 0 0;
+      border-radius: 11px;
+      background: linear-gradient(135deg, #2098f0, #45c2ff);
+      opacity: 0.9;
+    }
+
+    .match-points-cell.zero .match-points-fill {
+      width: 0 !important;
+    }
+
+    .match-points-value {
+      position: relative;
+      z-index: 1;
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .tooltip {
+      position: fixed;
+      z-index: 20;
+      max-width: 240px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(7, 18, 29, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: var(--shadow);
+      color: #f6fbff;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 140ms ease, transform 140ms ease;
+    }
+
+    .tooltip.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .tooltip strong {
+      display: block;
+      font-size: 16px;
+    }
+
+    .tooltip span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.35;
+    }
+
+    .footer-note {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 14px;
+      text-align: right;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 1160px) {
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .match-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app {
+        width: min(100% - 18px, 1440px);
+        padding-top: 14px;
+      }
+
+      .hero {
+        padding: 22px;
+      }
+
+      .stats,
+      .match-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .board {
+        padding: 14px;
+      }
+
+      .bar-chart-grid {
+        grid-template-columns: 48px minmax(0, 1fr);
+        gap: 10px;
+      }
+
+      .bar-chart-title {
+        font-size: 24px;
+      }
+
+      .bar-chart-subtitle {
+        font-size: 14px;
+      }
+
+      .bars {
+        gap: 6px;
+      }
+
+      .bar-value {
+        min-width: 40px;
+        min-height: 28px;
+        padding: 0 8px;
+        font-size: 13px;
+      }
+
+      .bar-name-inside {
+        font-size: 11px;
+      }
+
+      .bar-meta {
+        font-size: 10px;
+      }
+
+      .match-meta {
+        grid-template-columns: 1fr;
+      }
+
+      .match-table-head,
+      .match-row {
+        grid-template-columns: 84px 1fr 86px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="hero">
+      <div class="hero-top">
+        <div class="hero-copy">
+          <h1>Quiniela Ohana</h1>
+          <p>
+            Siguiendo el mundial 2026 partido a partido.
+          </p>
+        </div>
+      </div>
+
+      <div class="stats" id="stats"></div>
+    </section>
+
+    <section class="board">
+      <div class="board-head">
+        <div>
+          <h2>Tabla Familiar</h2>
+          <p>Cada columna muestra los puntos acumulados por participante hasta el momento.</p>
+        </div>
+      </div>
+
+      <div class="chart-shell">
+        <div class="loading" id="loading">Cargando tablero familiar...</div>
+        <div class="error" id="error" hidden></div>
+        <div class="chart bar-chart" id="rankingChart" hidden aria-label="Dashboard Quiniela Ohana"></div>
+      </div>
+
+      <div class="match-strip" id="matchStrip"></div>
+      <div class="footer-note">Recuerden enviar sus Quinielas antes de que empiece cada partido.</div>
+      <div class="footer-note">Pueden cambiar sus pronósticos hasta antes de que empiece cada partido.</div>
+    </section>
+  </main>
+
+  <div class="tooltip" id="tooltip" role="tooltip" aria-hidden="true"></div>
+
+  <script>
+    const API_URL = "quinielas_api.php";
+    const loading = document.querySelector("#loading");
+    const errorBox = document.querySelector("#error");
+    const stats = document.querySelector("#stats");
+    const chart = document.querySelector("#rankingChart");
+    const matchStrip = document.querySelector("#matchStrip");
+    const tooltip = document.querySelector("#tooltip");
+
+    const palette = [
+      "#ff7a59",
+      "#40e6d1",
+      "#ffd447",
+      "#66d17a",
+      "#72b6ff",
+      "#ff8ec8",
+      "#ffb347",
+      "#f35d5d",
+      "#7ed0ff",
+      "#b2ff5a",
+      "#ffdb7d",
+      "#bc8cff",
+      "#f7f7f7",
+      "#8df3d5"
+    ];
+
+    async function request() {
+      const response = await fetch(API_URL, {
+        headers: {
+          "Accept": "application/json"
+        }
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.detail || payload.error || "No se pudo cargar el dashboard");
+      }
+
+      return payload;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function partidoNumber(idPartido) {
+      const match = String(idPartido || "").match(/^(\d+)/);
+      return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
+    }
+
+    function compareSpanish(a, b) {
+      return String(a).localeCompare(String(b), "es", { sensitivity: "base" });
+    }
+
+    function dedupeQuinielas(rows) {
+      const seen = new Set();
+      const deduped = [];
+
+      for (const row of rows) {
+        const key = `${row.participante}|${row.id_partido}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        deduped.push(row);
+      }
+
+      return deduped;
+    }
+
+    function sortMatches(partidos) {
+      return [...partidos].sort((a, b) => {
+        const dateA = new Date(a.fecha_hora).getTime();
+        const dateB = new Date(b.fecha_hora).getTime();
+        if (dateA !== dateB) return dateA - dateB;
+        return partidoNumber(a.id_partido) - partidoNumber(b.id_partido);
+      });
+    }
+
+    function buildModel(payload) {
+      const matches = sortMatches(payload.partidos || []);
+      const dedupedQuinielas = dedupeQuinielas(payload.data || []);
+      const rowByKey = new Map(
+        dedupedQuinielas.map((row) => [`${row.participante}|${row.id_partido}`, row])
+      );
+
+      const tracks = (payload.participantes || []).map((participant, index) => ({
+        id: Number(participant.id),
+        nombre: participant.nombre,
+        color: palette[index % palette.length],
+        matchPoints: [],
+        cumulativePoints: [],
+        rankByMatch: []
+      }));
+
+      const previousOrder = new Map(
+        [...tracks]
+          .sort((a, b) => compareSpanish(a.nombre, b.nombre))
+          .map((participant, index) => [participant.id, index])
+      );
+
+      matches.forEach((match, matchIndex) => {
+        for (const track of tracks) {
+          const row = rowByKey.get(`${track.id}|${match.id_partido}`);
+          const earned = row ? Number(row.puntos || 0) : 0;
+          const previousTotal = matchIndex === 0 ? 0 : track.cumulativePoints[matchIndex - 1];
+          track.matchPoints.push(earned);
+          track.cumulativePoints.push(previousTotal + earned);
+        }
+
+        const standings = [...tracks].sort((a, b) => {
+          const totalDiff = b.cumulativePoints[matchIndex] - a.cumulativePoints[matchIndex];
+          if (totalDiff !== 0) return totalDiff;
+
+          const carryDiff = (previousOrder.get(a.id) ?? 999) - (previousOrder.get(b.id) ?? 999);
+          if (carryDiff !== 0) return carryDiff;
+
+          return compareSpanish(a.nombre, b.nombre);
+        });
+
+        standings.forEach((track, rankIndex) => {
+          track.rankByMatch[matchIndex] = rankIndex + 1;
+          previousOrder.set(track.id, rankIndex);
+        });
+      });
+
+      const lastIndex = Math.max(matches.length - 1, 0);
+      const firstMatchOrder = [...tracks].sort((a, b) => {
+        const rankDiff = (a.rankByMatch[0] ?? 999) - (b.rankByMatch[0] ?? 999);
+        return rankDiff !== 0 ? rankDiff : compareSpanish(a.nombre, b.nombre);
+      });
+
+      const finalOrder = [...tracks].sort((a, b) => {
+        const rankDiff = (a.rankByMatch[lastIndex] ?? 999) - (b.rankByMatch[lastIndex] ?? 999);
+        return rankDiff !== 0 ? rankDiff : compareSpanish(a.nombre, b.nombre);
+      });
+
+      const completedMatches = matches.filter(
+        (match) => match.result_eq1 !== null && match.result_eq2 !== null
+      ).length;
+
+      const exactHitCount = Math.max(
+        ...tracks.map((track) => track.matchPoints.filter((points) => points === 10).length),
+        0
+      );
+      const exactHitLeaders = tracks
+        .filter((track) => track.matchPoints.filter((points) => points === 10).length === exactHitCount)
+        .map((track) => track.nombre);
+
+      return {
+        matches,
+        tracks,
+        firstMatchOrder,
+        finalOrder,
+        completedMatches,
+        exactHitCount,
+        exactHitLeaders,
+        forecastCount: dedupedQuinielas.length,
+        rawRows: dedupedQuinielas
+      };
+    }
+
+    function leadingNames(model) {
+      if (!model.finalOrder.length) return "Sin datos";
+      const leader = model.finalOrder[0];
+      const leaderTotal = leader.cumulativePoints.at(-1) ?? 0;
+      const tied = model.finalOrder.filter((track) => (track.cumulativePoints.at(-1) ?? 0) === leaderTotal);
+      return tied.map((track) => track.nombre).join(", ");
+    }
+
+    function renderStats(model) {
+      const leader = model.finalOrder[0];
+      const leaderPoints = leader ? leader.cumulativePoints.at(-1) ?? 0 : 0;
+      const runnerUp = model.finalOrder[1];
+      const gap = leader && runnerUp
+        ? leaderPoints - (runnerUp.cumulativePoints.at(-1) ?? 0)
+        : 0;
+      const bestStreakNames = model.exactHitLeaders?.length
+        ? model.exactHitLeaders.join(", ")
+        : "Sin exactos";
+
+      stats.innerHTML = [
+        {
+          label: "Lider actual",
+          value: escapeHtml(leadingNames(model)),
+          note: leader ? `${leaderPoints} puntos${gap > 0 ? ` • ventaja de ${gap}` : ""}` : "Esperando resultados"
+        },
+        {
+          label: "Mejor racha",
+          value: escapeHtml(bestStreakNames),
+          note: model.exactHitCount > 0
+            ? `${model.exactHitCount} aciertos exactos historicos`
+            : "Aun sin aciertos exactos"
+        },
+        {
+          label: "Partidos cerrados",
+          value: `${model.completedMatches}/${model.matches.length}`,
+          note: "Solo los partidos con marcador final mueven el tablero"
+        },
+        {
+          label: "Pronosticos totales",
+          value: String(model.forecastCount),
+          note: `${model.tracks.length} participantes en la familia`
+        }
+      ].map((item) => `
+        <article class="stat">
+          <span class="stat-label">${item.label}</span>
+          <span class="stat-value">${item.value}</span>
+          <span class="stat-note">${item.note}</span>
+        </article>
+      `).join("");
+    }
+
+    function matchName(match) {
+      return `${match.equipo1} vs ${match.equipo2}`;
+    }
+
+    function matchResult(match) {
+      if (match.result_eq1 === null || match.result_eq2 === null) {
+        return "Pendiente";
+      }
+
+      return `${match.equipo1} ${match.result_eq1} - ${match.result_eq2} ${match.equipo2}`;
+    }
+
+    function teamCode(name) {
+      const ignored = new Set(["de", "del", "la", "las", "los", "y"]);
+      const words = String(name || "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .filter((word) => !ignored.has(word.toLowerCase()));
+
+      if (!words.length) return "???";
+      if (words.length === 1) return words[0].slice(0, 3).toUpperCase();
+      return words.map((word) => word[0]).join("").slice(0, 4).toUpperCase();
+    }
+
+    function formatPrediction(match, row) {
+      if (row.result_eq1 === null || row.result_eq2 === null) {
+        return "Sin pronostico";
+      }
+
+      if (row.result_eq1 === row.result_eq2) {
+        return `Empate ${row.result_eq1} - ${row.result_eq2}`;
+      }
+
+      return `${teamCode(match.equipo1)} ${row.result_eq1} - ${row.result_eq2} ${teamCode(match.equipo2)}`;
+    }
+
+    function shortWinners(model, matchIndex) {
+      const best = Math.max(...model.tracks.map((track) => track.matchPoints[matchIndex] ?? 0));
+      if (best <= 0) {
+        return "Sin premio en este round";
+      }
+
+      const names = model.tracks
+        .filter((track) => (track.matchPoints[matchIndex] ?? 0) === best)
+        .map((track) => track.nombre);
+
+      return `${names.join(", ")} con ${best} pts`;
+    }
+
+    function renderMatchStrip(model) {
+      const rowByKey = new Map(
+        dedupeQuinielas(model.rawRows || []).map((row) => [`${row.participante}|${row.id_partido}`, row])
+      );
+
+      const newestFirst = model.matches.map((match, index) => ({ match, index })).reverse();
+
+      matchStrip.innerHTML = newestFirst.map(({ match, index }) => {
+        const rows = model.tracks.map((track) => {
+          const row = rowByKey.get(`${track.id}|${match.id_partido}`);
+          return {
+            nombre: track.nombre,
+            puntos: row ? Number(row.puntos || 0) : 0,
+            result_eq1: row?.result_eq1 ?? null,
+            result_eq2: row?.result_eq2 ?? null
+          };
+        }).sort((a, b) => {
+          const pointsDiff = b.puntos - a.puntos;
+          return pointsDiff !== 0 ? pointsDiff : compareSpanish(a.nombre, b.nombre);
+        });
+
+        const exactos = rows.filter((row) => row.puntos === 10).length;
+        const sumaron = rows.filter((row) => row.puntos > 0).length;
+        const repartidos = rows.reduce((sum, row) => sum + row.puntos, 0);
+
+        return `
+          <article class="match-card">
+            <div class="match-card-top">
+              <span class="match-number">#${partidoNumber(match.id_partido)}</span>
+              <span class="match-status">${match.result_eq1 === null || match.result_eq2 === null ? "Abierto" : "Cerrado"}</span>
+            </div>
+
+            <div style="padding: 0 14px 12px;">
+              <h3>${escapeHtml(matchName(match))}</h3>
+            </div>
+
+            <div class="match-scoreband">
+              <span class="match-result-label">Resultado</span>
+              <div class="match-result">${escapeHtml(matchResult(match))}</div>
+            </div>
+
+            <div class="match-meta">
+              <div class="match-meta-chip">
+                <strong>${exactos}</strong>
+                <span>Aciertos exactos</span>
+              </div>
+              <div class="match-meta-chip">
+                <strong>${sumaron}/${rows.length}</strong>
+                <span>Sumaron puntos</span>
+              </div>
+              <div class="match-meta-chip">
+                <strong>${repartidos}</strong>
+                <span>Puntos repartidos</span>
+              </div>
+            </div>
+
+            <div class="match-table">
+              <div class="match-table-head">
+                <span>Jugador</span>
+                <span>Pronostico</span>
+                <span>Puntos</span>
+              </div>
+              <div class="match-table-body">
+                ${rows.map((row) => {
+                  const fillWidth = row.puntos > 0 ? `${Math.max((row.puntos / 10) * 100, 12)}%` : "0%";
+                  return `
+                    <div class="match-row">
+                      <div class="match-player">${escapeHtml(row.nombre)}</div>
+                      <div class="match-prediction">${escapeHtml(formatPrediction(match, row))}</div>
+                      <div class="match-points-cell${row.puntos === 0 ? " zero" : ""}">
+                        <div class="match-points-fill" style="width:${fillWidth};"></div>
+                        <span class="match-points-value">${row.puntos}</span>
+                      </div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderChart(model) {
+      const ranked = [...model.tracks].sort((a, b) => {
+        const totalDiff = (b.cumulativePoints.at(-1) ?? 0) - (a.cumulativePoints.at(-1) ?? 0);
+        return totalDiff !== 0 ? totalDiff : compareSpanish(a.nombre, b.nombre);
+      });
+      const maxPoints = Math.max(...ranked.map((track) => track.cumulativePoints.at(-1) ?? 0), 10);
+      const niceMax = maxPoints <= 20 ? Math.ceil(maxPoints / 5) * 5 : Math.ceil(maxPoints / 10) * 10;
+      const safeMax = Math.max(niceMax, 10);
+      const tickStep = safeMax <= 20 ? 5 : 10;
+      const ticks = [];
+
+      for (let value = safeMax; value >= 0; value -= tickStep) {
+        ticks.push(value);
+      }
+
+      chart.innerHTML = `
+        <div class="bar-chart-header">
+          <div>
+            <h3 class="bar-chart-title">Puntos acumulados</h3>
+            <p class="bar-chart-subtitle">Despues de ${model.completedMatches} partidos cerrados, asi va la competencia en casa.</p>
+          </div>
+          <div class="bar-chart-stage">Ultimo partido cargado: #${partidoNumber(model.matches.at(-1)?.id_partido || "")}</div>
+        </div>
+
+        <div class="bar-chart-grid">
+          <div class="y-axis" style="--tick-count:${ticks.length}">
+            ${ticks.map((tick) => `<div class="y-axis-label">${tick} pts</div>`).join("")}
+          </div>
+
+          <div class="plot">
+            <div class="plot-lines" style="--tick-count:${ticks.length}">
+              ${ticks.map(() => '<div class="plot-line"></div>').join("")}
+            </div>
+
+            <div class="bars">
+              ${ranked.map((track, index) => {
+                const total = track.cumulativePoints.at(-1) ?? 0;
+                const previous = model.matches.length > 1 ? track.cumulativePoints.at(-2) ?? 0 : 0;
+                const delta = total - previous;
+                const height = `${Math.max((total / safeMax) * 100, total > 0 ? 8 : 0)}%`;
+                const gradient = `linear-gradient(180deg, ${track.color}, rgba(4, 19, 31, 0.9))`;
+
+                return `
+                  <div class="bar-slot">
+                    <div class="bar-stack">
+                      <div class="bar-track"></div>
+                      <div
+                        class="bar-fill"
+                        style="height:${height}; background:${gradient}; transition-delay:${index * 45}ms;"
+                        data-name="${escapeHtml(track.nombre)}"
+                        data-total="${total}"
+                        data-delta="${delta}"
+                        data-color="${track.color}"
+                      >
+                        <span class="bar-value">${total}</span>
+                        <span class="bar-name-inside">${escapeHtml(track.nombre)}</span>
+                      </div>
+                    </div>
+                    <div class="bar-label">
+                      <span class="bar-meta">${index + 1} lugar</span>
+                    </div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          </div>
+        </div>
+      `;
+
+      function showTooltip(event, html) {
+        tooltip.innerHTML = html;
+        tooltip.classList.add("visible");
+        tooltip.setAttribute("aria-hidden", "false");
+
+        const x = Math.min(window.innerWidth - 260, event.clientX + 16);
+        const y = Math.max(16, event.clientY - 18);
+        tooltip.style.left = `${x}px`;
+        tooltip.style.top = `${y}px`;
+      }
+
+      function clearTooltip() {
+        tooltip.classList.remove("visible");
+        tooltip.setAttribute("aria-hidden", "true");
+      }
+
+      const bars = [...chart.querySelectorAll(".bar-fill")];
+      const labels = [...chart.querySelectorAll(".bar-label")];
+
+      requestAnimationFrame(() => {
+        bars.forEach((bar) => {
+          bar.style.transform = "scaleY(1)";
+        });
+      });
+
+      bars.forEach((bar, index) => {
+        const label = labels[index];
+        bar.addEventListener("pointerenter", (event) => {
+          const name = bar.dataset.name || "";
+          const total = bar.dataset.total || "0";
+          const delta = Number(bar.dataset.delta || 0);
+          const extra = delta > 0 ? ` • +${delta} en el ultimo partido` : "";
+          showTooltip(event, `<strong>${name}</strong><span>${total} puntos acumulados${extra}</span>`);
+          bars.forEach((item) => {
+            item.style.opacity = item === bar ? "1" : "0.28";
+          });
+          if (label) {
+            label.style.background = "rgba(255, 255, 255, 0.11)";
+          }
+        });
+
+        bar.addEventListener("pointermove", (event) => {
+          const name = bar.dataset.name || "";
+          const total = bar.dataset.total || "0";
+          const delta = Number(bar.dataset.delta || 0);
+          showTooltip(event, `<strong>${name}</strong><span>${total} puntos acumulados${delta > 0 ? ` • +${delta} en el ultimo partido` : ""}</span>`);
+        });
+
+        bar.addEventListener("pointerleave", () => {
+          bars.forEach((item) => {
+            item.style.opacity = "1";
+          });
+          if (label) {
+            label.style.background = "rgba(255, 255, 255, 0.05)";
+          }
+          clearTooltip();
+        });
+      });
+    }
+
+    async function init() {
+      try {
+        const payload = await request();
+        const model = buildModel(payload);
+
+        if (!model.matches.length || !model.tracks.length) {
+          throw new Error("No hay suficiente informacion para construir el dashboard");
+        }
+
+        renderStats(model);
+        renderChart(model);
+        renderMatchStrip(model);
+
+        loading.hidden = true;
+        errorBox.hidden = true;
+        chart.hidden = false;
+      } catch (error) {
+        loading.hidden = true;
+        chart.hidden = true;
+        errorBox.hidden = false;
+        errorBox.textContent = error.message;
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

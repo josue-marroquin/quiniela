@@ -369,7 +369,9 @@
         <div class="grid">
           <div class="field">
             <label for="participante">participante</label>
-            <input id="participante" name="participante" type="number" min="1" step="1" inputmode="numeric" required>
+            <select id="participante" name="participante" required>
+              <option value="">Cargando participantes...</option>
+            </select>
           </div>
 
           <div class="field">
@@ -408,7 +410,7 @@
               <tr>
                 <th>id</th>
                 <th>participante</th>
-                <th>id_partido</th>
+                <th>partido</th>
                 <th>result_eq1</th>
                 <th>result_eq2</th>
                 <th>puntos</th>
@@ -448,6 +450,7 @@
 
     let quinielas = [];
     let partidos = [];
+    let participantes = [];
     let editingId = null;
 
     async function request(path = "", options = {}) {
@@ -500,6 +503,10 @@
       return `${partido.id_partido}${teams}`;
     }
 
+    function participanteLabel(participante) {
+      return `${participante.nombre} (#${participante.id})`;
+    }
+
     function renderPartidoOptions() {
       if (!partidos.length) {
         fields.idPartido.innerHTML = '<option value="">Sin partidos disponibles</option>';
@@ -512,13 +519,38 @@
       ].join("");
     }
 
+    function renderParticipanteOptions() {
+      if (!participantes.length) {
+        fields.participante.innerHTML = '<option value="">Sin participantes disponibles</option>';
+        return;
+      }
+
+      fields.participante.innerHTML = [
+        '<option value="">Selecciona un participante</option>',
+        ...participantes.map((participante) => `<option value="${participante.id}">${escapeHtml(participanteLabel(participante))}</option>`)
+      ].join("");
+    }
+
     function filteredQuinielas() {
       const term = search.value.trim().toLowerCase();
       if (!term) return quinielas;
       return quinielas.filter((quiniela) => {
-        return [quiniela.id, quiniela.participante, quiniela.id_partido]
+        return [quiniela.id, quiniela.participante, quiniela.participante_nombre, quiniela.partido, quiniela.id_partido]
           .some((value) => String(value).toLowerCase().includes(term));
       });
+    }
+
+    function renderParticipanteCell(quiniela) {
+      const name = quiniela.participante_nombre ? escapeHtml(quiniela.participante_nombre) : `ID ${quiniela.participante}`;
+      return `${name} <span class="mono">#${quiniela.participante}</span>`;
+    }
+
+    function renderPartidoCell(quiniela) {
+      if (quiniela.partido) {
+        return escapeHtml(quiniela.partido);
+      }
+
+      return `<span class="mono">${escapeHtml(quiniela.id_partido)}</span>`;
     }
 
     function render() {
@@ -526,8 +558,8 @@
       body.innerHTML = visibleQuinielas.map((quiniela) => `
         <tr>
           <td>${quiniela.id}</td>
-          <td>${quiniela.participante}</td>
-          <td class="mono">${escapeHtml(quiniela.id_partido)}</td>
+          <td>${renderParticipanteCell(quiniela)}</td>
+          <td>${renderPartidoCell(quiniela)}</td>
           <td>${renderScore(quiniela.result_eq1)}</td>
           <td>${renderScore(quiniela.result_eq2)}</td>
           <td><span class="points">${quiniela.puntos ?? 0}</span></td>
@@ -581,15 +613,19 @@
         const payload = await request();
         quinielas = payload.data || [];
         partidos = payload.partidos || [];
+        participantes = payload.participantes || [];
         sourceChip.textContent = payload.table ? `MySQL: ${payload.table}` : "MySQL";
         renderPartidoOptions();
+        renderParticipanteOptions();
         emptyState.textContent = "Sin quinielas registradas";
         render();
       } catch (error) {
         quinielas = [];
         partidos = [];
+        participantes = [];
         body.innerHTML = "";
         renderPartidoOptions();
+        renderParticipanteOptions();
         totalChip.textContent = "0 quinielas";
         sourceChip.textContent = "Error DB";
         emptyState.textContent = error.message;
