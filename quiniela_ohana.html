@@ -1224,20 +1224,44 @@
       }).join("");
     }
 
+    function chartScale(maxValue) {
+      const safeValue = Math.max(maxValue, 10);
+      const targetTicks = window.innerWidth <= 760 ? 5 : 7;
+      const rawStep = safeValue / Math.max(targetTicks - 1, 1);
+      const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+      const normalized = rawStep / magnitude;
+      let niceStep = magnitude;
+
+      if (normalized <= 1) {
+        niceStep = magnitude;
+      } else if (normalized <= 2) {
+        niceStep = 2 * magnitude;
+      } else if (normalized <= 5) {
+        niceStep = 5 * magnitude;
+      } else {
+        niceStep = 10 * magnitude;
+      }
+
+      const safeMax = Math.max(Math.ceil(safeValue / niceStep) * niceStep, niceStep);
+      const ticks = [];
+
+      for (let value = safeMax; value >= 0; value -= niceStep) {
+        ticks.push(value);
+      }
+
+      return {
+        safeMax,
+        ticks,
+      };
+    }
+
     function renderChart(model) {
       const ranked = [...model.tracks].sort((a, b) => {
         const totalDiff = (b.cumulativePoints.at(-1) ?? 0) - (a.cumulativePoints.at(-1) ?? 0);
         return totalDiff !== 0 ? totalDiff : compareSpanish(a.nombre, b.nombre);
       });
       const maxPoints = Math.max(...ranked.map((track) => track.cumulativePoints.at(-1) ?? 0), 10);
-      const niceMax = maxPoints <= 20 ? Math.ceil(maxPoints / 5) * 5 : Math.ceil(maxPoints / 10) * 10;
-      const safeMax = Math.max(niceMax, 10);
-      const tickStep = safeMax <= 20 ? 5 : 10;
-      const ticks = [];
-
-      for (let value = safeMax; value >= 0; value -= tickStep) {
-        ticks.push(value);
-      }
+      const { safeMax, ticks } = chartScale(maxPoints);
 
       chart.innerHTML = `
         <div class="bar-chart-header">
