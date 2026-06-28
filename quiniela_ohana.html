@@ -524,6 +524,33 @@
       margin-top: 16px;
     }
 
+    .load-more-wrap {
+      display: flex;
+      justify-content: center;
+      margin-top: 18px;
+    }
+
+    .load-more-button {
+      min-height: 46px;
+      padding: 0 22px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      color: #f6fbff;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+    }
+
+    .load-more-button:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
     .match-card {
       overflow: hidden;
       border-radius: 20px;
@@ -856,18 +883,34 @@
     <section class="board">
       <div class="board-head">
         <div>
-          <h2>Tabla Familiar</h2>
+          <h2>Tablero de puntos</h2>
           <p>Cada columna muestra los puntos acumulados por participante hasta el momento.</p>
         </div>
       </div>
 
       <div class="chart-shell">
-        <div class="loading" id="loading">Cargando tablero familiar...</div>
+        <div class="loading" id="loading">Cargando tablero de puntos...</div>
         <div class="error" id="error" hidden></div>
         <div class="chart bar-chart" id="rankingChart" hidden aria-label="Dashboard Quiniela Ohana"></div>
       </div>
+    </section>
+
+    <section class="board" id="hitsBoard" hidden>
+      <div class="board-head">
+        <div>
+          <h2>Tablero de Aciertos</h2>
+          <p>Cada columna muestra los aciertos exactos acumulados por participante hasta el momento.</p>
+        </div>
+      </div>
+
+      <div class="chart-shell">
+        <div class="chart bar-chart" id="hitsChart" hidden aria-label="Tablero de aciertos Quiniela Ohana"></div>
+      </div>
 
       <div class="match-strip" id="matchStrip"></div>
+      <div class="load-more-wrap" id="showMoreWrap" hidden>
+        <button class="load-more-button" id="showMoreMatches" type="button">Mostrar mas</button>
+      </div>
       <div class="footer-note">Recuerden enviar sus Quinielas antes de que empiece cada partido.</div>
       <div class="footer-note">Pueden cambiar sus pronósticos hasta antes de que empiece cada partido.</div>
     </section>
@@ -880,9 +923,17 @@
     const loading = document.querySelector("#loading");
     const errorBox = document.querySelector("#error");
     const stats = document.querySelector("#stats");
+    const hitsBoard = document.querySelector("#hitsBoard");
     const chart = document.querySelector("#rankingChart");
+    const hitsChart = document.querySelector("#hitsChart");
     const matchStrip = document.querySelector("#matchStrip");
+    const showMoreWrap = document.querySelector("#showMoreWrap");
+    const showMoreMatchesButton = document.querySelector("#showMoreMatches");
     const tooltip = document.querySelector("#tooltip");
+
+    const MATCHES_PER_PAGE = 10;
+    let visibleMatchCount = MATCHES_PER_PAGE;
+    let currentModel = null;
 
     const palette = [
       "#ff7a59",
@@ -970,6 +1021,8 @@
         color: palette[index % palette.length],
         matchPoints: [],
         cumulativePoints: [],
+        matchExactHits: [],
+        cumulativeExactHits: [],
         rankByMatch: []
       }));
 
@@ -983,9 +1036,13 @@
         for (const track of tracks) {
           const row = rowByKey.get(`${track.id}|${match.id_partido}`);
           const earned = row ? Number(row.puntos || 0) : 0;
+          const exactHit = earned === 10 ? 1 : 0;
           const previousTotal = matchIndex === 0 ? 0 : track.cumulativePoints[matchIndex - 1];
+          const previousExactHits = matchIndex === 0 ? 0 : track.cumulativeExactHits[matchIndex - 1];
           track.matchPoints.push(earned);
           track.cumulativePoints.push(previousTotal + earned);
+          track.matchExactHits.push(exactHit);
+          track.cumulativeExactHits.push(previousExactHits + exactHit);
         }
 
         const standings = [...tracks].sort((a, b) => {
@@ -1020,11 +1077,11 @@
       ).length;
 
       const exactHitCount = Math.max(
-        ...tracks.map((track) => track.matchPoints.filter((points) => points === 10).length),
+        ...tracks.map((track) => track.cumulativeExactHits.at(-1) ?? 0),
         0
       );
       const exactHitLeaders = tracks
-        .filter((track) => track.matchPoints.filter((points) => points === 10).length === exactHitCount)
+        .filter((track) => (track.cumulativeExactHits.at(-1) ?? 0) === exactHitCount)
         .map((track) => track.nombre);
 
       return {
@@ -1147,8 +1204,9 @@
       );
 
       const newestFirst = model.matches.map((match, index) => ({ match, index })).reverse();
+      const visibleMatches = newestFirst.slice(0, visibleMatchCount);
 
-      matchStrip.innerHTML = newestFirst.map(({ match, index }) => {
+      matchStrip.innerHTML = visibleMatches.map(({ match, index }) => {
         const rows = model.tracks.map((track) => {
           const row = rowByKey.get(`${track.id}|${match.id_partido}`);
           return {
@@ -1222,10 +1280,12 @@
           </article>
         `;
       }).join("");
+
+      showMoreWrap.hidden = newestFirst.length <= visibleMatchCount;
     }
 
-    function chartScale(maxValue) {
-      const safeValue = Math.max(maxValue, 10);
+    function chartScale(maxValue, minimumMax = 10, minStep = 1) {
+      const safeValue = Math.max(maxValue, minimumMax);
       const targetTicks = window.innerWidth <= 760 ? 5 : 7;
       const rawStep = safeValue / Math.max(targetTicks - 1, 1);
       const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
@@ -1242,6 +1302,7 @@
         niceStep = 10 * magnitude;
       }
 
+      niceStep = Math.max(niceStep, minStep);
       const safeMax = Math.max(Math.ceil(safeValue / niceStep) * niceStep, niceStep);
       const ticks = [];
 
@@ -1255,26 +1316,26 @@
       };
     }
 
-    function renderChart(model) {
+    function renderRankingChart(target, model, options) {
       const ranked = [...model.tracks].sort((a, b) => {
-        const totalDiff = (b.cumulativePoints.at(-1) ?? 0) - (a.cumulativePoints.at(-1) ?? 0);
+        const totalDiff = (options.series(b).at(-1) ?? 0) - (options.series(a).at(-1) ?? 0);
         return totalDiff !== 0 ? totalDiff : compareSpanish(a.nombre, b.nombre);
       });
-      const maxPoints = Math.max(...ranked.map((track) => track.cumulativePoints.at(-1) ?? 0), 10);
-      const { safeMax, ticks } = chartScale(maxPoints);
+      const maxValue = Math.max(...ranked.map((track) => options.series(track).at(-1) ?? 0), options.minimumMax);
+      const { safeMax, ticks } = chartScale(maxValue, options.minimumMax, options.minStep);
 
-      chart.innerHTML = `
+      target.innerHTML = `
         <div class="bar-chart-header">
           <div>
-            <h3 class="bar-chart-title">Puntos acumulados</h3>
-            <p class="bar-chart-subtitle">Despues de ${model.completedMatches} partidos cerrados, asi va la competencia en casa.</p>
+            <h3 class="bar-chart-title">${options.title}</h3>
+            <p class="bar-chart-subtitle">${options.subtitle(model)}</p>
           </div>
-          <div class="bar-chart-stage">Ultimo partido cargado: #${partidoNumber(model.matches.at(-1)?.id_partido || "")}</div>
+          <div class="bar-chart-stage">${options.stage(model)}</div>
         </div>
 
         <div class="bar-chart-grid">
           <div class="y-axis" style="--tick-count:${ticks.length}">
-            ${ticks.map((tick) => `<div class="y-axis-label">${tick} pts</div>`).join("")}
+            ${ticks.map((tick) => `<div class="y-axis-label">${options.tickLabel(tick)}</div>`).join("")}
           </div>
 
           <div class="plot-scroll">
@@ -1285,8 +1346,9 @@
 
               <div class="bars">
                 ${ranked.map((track, index) => {
-                  const total = track.cumulativePoints.at(-1) ?? 0;
-                  const previous = model.matches.length > 1 ? track.cumulativePoints.at(-2) ?? 0 : 0;
+                  const values = options.series(track);
+                  const total = values.at(-1) ?? 0;
+                  const previous = model.matches.length > 1 ? values.at(-2) ?? 0 : 0;
                   const delta = total - previous;
                   const height = `${Math.max((total / safeMax) * 100, total > 0 ? 8 : 0)}%`;
                   const gradient = `linear-gradient(180deg, ${track.color}, rgba(4, 19, 31, 0.9))`;
@@ -1335,8 +1397,8 @@
         tooltip.setAttribute("aria-hidden", "true");
       }
 
-      const bars = [...chart.querySelectorAll(".bar-fill")];
-      const labels = [...chart.querySelectorAll(".bar-label")];
+      const bars = [...target.querySelectorAll(".bar-fill")];
+      const labels = [...target.querySelectorAll(".bar-label")];
 
       requestAnimationFrame(() => {
         bars.forEach((bar) => {
@@ -1350,8 +1412,7 @@
           const name = bar.dataset.name || "";
           const total = bar.dataset.total || "0";
           const delta = Number(bar.dataset.delta || 0);
-          const extra = delta > 0 ? ` • +${delta} en el ultimo partido` : "";
-          showTooltip(event, `<strong>${name}</strong><span>${total} puntos acumulados${extra}</span>`);
+          showTooltip(event, `<strong>${name}</strong><span>${total} ${options.tooltipUnit}${options.deltaLabel(delta)}</span>`);
           bars.forEach((item) => {
             item.style.opacity = item === bar ? "1" : "0.28";
           });
@@ -1364,7 +1425,7 @@
           const name = bar.dataset.name || "";
           const total = bar.dataset.total || "0";
           const delta = Number(bar.dataset.delta || 0);
-          showTooltip(event, `<strong>${name}</strong><span>${total} puntos acumulados${delta > 0 ? ` • +${delta} en el ultimo partido` : ""}</span>`);
+          showTooltip(event, `<strong>${name}</strong><span>${total} ${options.tooltipUnit}${options.deltaLabel(delta)}</span>`);
         });
 
         bar.addEventListener("pointerleave", () => {
@@ -1379,10 +1440,49 @@
       });
     }
 
+    function renderChart(model) {
+      renderRankingChart(chart, model, {
+        title: "Puntos acumulados",
+        subtitle: () => `Despues de ${model.completedMatches} partidos cerrados, asi va la competencia en casa.`,
+        stage: () => `Ultimo partido cargado: #${partidoNumber(model.matches.at(-1)?.id_partido || "")}`,
+        series: (track) => track.cumulativePoints,
+        tickLabel: (tick) => `${tick} pts`,
+        tooltipUnit: "puntos acumulados",
+        deltaLabel: (delta) => delta > 0 ? ` • +${delta} en el ultimo partido` : "",
+        minimumMax: 10,
+        minStep: 1,
+      });
+    }
+
+    function renderHitsChart(model) {
+      renderRankingChart(hitsChart, model, {
+        title: "Aciertos acumulados",
+        subtitle: () => `Cada exacto suma una marca mas en el historial de la familia despues de ${model.completedMatches} partidos cerrados.`,
+        stage: () => `Exactos cargados hasta el partido #${partidoNumber(model.matches.at(-1)?.id_partido || "")}`,
+        series: (track) => track.cumulativeExactHits,
+        tickLabel: (tick) => `${tick} ac`,
+        tooltipUnit: "aciertos acumulados",
+        deltaLabel: (delta) => {
+          if (delta <= 0) return "";
+          return ` • +${delta} acierto${delta === 1 ? "" : "s"} en el ultimo partido`;
+        },
+        minimumMax: 1,
+        minStep: 1,
+      });
+    }
+
+    showMoreMatchesButton.addEventListener("click", () => {
+      if (!currentModel) return;
+      visibleMatchCount += MATCHES_PER_PAGE;
+      renderMatchStrip(currentModel);
+    });
+
     async function init() {
       try {
         const payload = await request();
         const model = buildModel(payload);
+        currentModel = model;
+        visibleMatchCount = MATCHES_PER_PAGE;
 
         if (!model.matches.length || !model.tracks.length) {
           throw new Error("No hay suficiente informacion para construir el dashboard");
@@ -1390,14 +1490,20 @@
 
         renderStats(model);
         renderChart(model);
+        renderHitsChart(model);
         renderMatchStrip(model);
 
         loading.hidden = true;
         errorBox.hidden = true;
         chart.hidden = false;
+        hitsBoard.hidden = false;
+        hitsChart.hidden = false;
       } catch (error) {
         loading.hidden = true;
         chart.hidden = true;
+        hitsBoard.hidden = true;
+        hitsChart.hidden = true;
+        showMoreWrap.hidden = true;
         errorBox.hidden = false;
         errorBox.textContent = error.message;
       }

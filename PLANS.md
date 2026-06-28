@@ -1,64 +1,49 @@
 # Project Plans
 
-## Next Milestone: Quinielas CRUD
+## Current State
 
-The next planned feature is a CRUD interface for `quinielas`. This will build on the current `partidos` CRUD and prepare the data model for dashboard views.
+The project already includes the core `partidos` and `quinielas` CRUD flows, plus a family dashboard view in `quiniela_ohana.html`.
+
+The dashboard currently shows:
+
+- Accumulated points ranking.
+- Accumulated exact-hit ranking.
+- Summary stats for leaders, exact hits, closed matches, and total predictions.
+- Match cards ordered from newest to oldest.
+- Pagination for match cards, loading the 10 most recent first and revealing 10 more with `Mostrar mas`.
+
+There is also a bot-facing endpoint available in `partidos_bot_api.php` for batch match creation and result updates.
 
 ## Data Relationships
 
-The quinielas workflow should link these tables:
+The quinielas workflow links these tables:
 
 - `partidos`: match schedule, teams, generated `id_partido`, and final results.
 - `participantes`: people or users submitting predictions.
 - `quinielas`: submitted predictions per participant and match.
 
-The `quinielas` table should reference both a partido and a participante, then store predicted scores and any calculated result fields needed later.
+The `quinielas` table references both a partido and a participante, then stores predicted scores and calculated points.
 
-## Implementation Direction
+## Active Dashboard Direction
 
-Start by verifying the database schema for `participantes` and `quinielas`. After that, create a CRUD similar to `partidos.html` and `partidos_api.php`, using the same API pattern and JSON responses.
+The current dashboard is built from the existing CRUD APIs and focuses on:
 
-Expected next files may include:
+- Standings by accumulated points.
+- Exact-hit tracking by participant.
+- Per-match breakdowns of predictions and points awarded.
 
-- `quinielas.html`
-- `quinielas_api.php`
-- Optional shared helpers if duplicated API logic becomes significant.
+Any future dashboard work should preserve the current mobile-friendly behavior:
 
-## Dashboard Goal
+- Adaptive chart scales.
+- Horizontal scrolling for dense ranking charts on small screens.
+- Paginated match history instead of rendering every card at once.
 
-After the three core areas are connected, create a dashboard that summarizes standings, participant points, match results, and prediction accuracy. The dashboard should consume the existing CRUD APIs or a dedicated dashboard endpoint if aggregate queries become complex.
+## Next Useful Improvements
 
-When ready to build the dashboard, start from this query shape:
+Potential next steps:
 
-```sql
-SELECT
-    p.nombre,
-    q.result_eq1,
-    q.result_eq2,
-    q.puntos
-FROM quinielas AS q
-JOIN participantes AS p
-    ON p.id = q.participante
-GROUP BY q.id_partido;
-```
-
-Before implementation, confirm whether the dashboard should show one row per participant, one grouped summary per partido, or both. The final query may need aggregation depending on that decision.
-
-
-This other query might also be useful
-```
-SELECT
-    CONCAT(prts.equipo1, ' vs ', prts.equipo2) as partido,
-    prts.result_eq1,
-    prts.result_eq2,
-    p.nombre,
-    q.result_eq1,
-    q.result_eq2,
-    q.puntos
-FROM quinielas AS q
-JOIN participantes AS p
-    ON p.id = q.participante
-JOIN partidos AS prts
-	ON q.id_partido = prts.id_partido
-GROUP BY q.id_partido;
-```
+- Add filters for open vs closed matches in the match history.
+- Add date-range or stage filters for both ranking boards.
+- Surface participant trend changes between matches.
+- Introduce security for `partidos_bot_api.php` before broader automation use.
+- Consider a dedicated dashboard endpoint if the UI needs heavier aggregation or better performance.
